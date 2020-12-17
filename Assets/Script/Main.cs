@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System.IO;
+using Newtonsoft.Json.Linq;
 
 public class Main : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class Main : MonoBehaviour
     public GameObject textInfoPrefab;
 
     public GameObject title;
+
+    public List<GameObject> infoListText = new List<GameObject>();
 
     // Clase que contiene los elementos leidos del json
     [System.Serializable]
@@ -34,12 +37,14 @@ public class Main : MonoBehaviour
 
     public ReadJson data = new ReadJson();
 
+    string currentJson;
+
+    string lastJson;
+
     // Start is called before the first frame update
     void Start()
     {
-        string path = Application.dataPath + "/StreamingAssets/JsonChallenge.json";
-        string json = File.ReadAllText(path);
-        data = Newtonsoft.Json.JsonConvert.DeserializeObject<ReadJson>(json);
+        data = GetJsonFile();
         title.GetComponent<TextMeshProUGUI>().SetText(data.Title);
         AddDataToGrid(data.Data);
     }
@@ -63,6 +68,40 @@ public class Main : MonoBehaviour
             GameObject nick_txt = Instantiate(textInfoPrefab, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;
             nick_txt.GetComponent<TextMeshProUGUI>().SetText(data.NickName);
             nick_txt.transform.SetParent(grilla.transform, false);
+
+            infoListText.Add(id_txt);
+            infoListText.Add(name_txt);
+            infoListText.Add(role_txt);
+            infoListText.Add(nick_txt);
+        }
+    }
+
+    public ReadJson GetJsonFile()
+    {
+        string path = Application.dataPath + "/StreamingAssets/JsonChallenge.json";
+        currentJson = File.ReadAllText(path);
+        data = Newtonsoft.Json.JsonConvert.DeserializeObject<ReadJson>(currentJson);
+        return data;
+        
+    }
+
+    public void CheckJson()
+    {
+        lastJson = currentJson;
+        ReadJson data =  GetJsonFile();
+        JToken last = JToken.Parse(lastJson);
+        JToken current = JToken.Parse(currentJson);
+        bool result = JToken.DeepEquals(last, current);
+        if (result) {
+            Debug.Log("Son iguales!");
+        }
+        else
+        {
+            foreach (var item in infoListText)
+            {
+                Destroy(item);
+            }
+            AddDataToGrid(data.Data);
         }
     }
 }
